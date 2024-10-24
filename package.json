@@ -10,13 +10,18 @@
     "test": "jest"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.0.4",
+    "@react-native-async-storage/async-storage": "^2.0.0",
+    "axios": "^1.7.7",
     "react": "18.3.1",
-    "react-native": "0.76.0"
+    "react-native": "0.76.0",
+    "react-native-svg": "^15.8.0",
+    "react-native-svg-transformer": "^1.5.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
-    "@babel/runtime": "^7.25.0",
+    "@babel/runtime": "^7.25.9",
     "@react-native-community/cli": "15.0.0-alpha.2",
     "@react-native-community/cli-platform-android": "15.0.0-alpha.2",
     "@react-native-community/cli-platform-ios": "15.0.0-alpha.2",
