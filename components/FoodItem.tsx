@@ -1,5 +1,16 @@
+// FoodItem.tsx
 import React from 'react';
-import {View, Text, StyleSheet, Image, ImageSourcePropType} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ImageSourcePropType,
+  TouchableOpacity,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../App';
 
 interface FoodItemProps {
   name: string;
@@ -7,9 +18,22 @@ interface FoodItemProps {
   isActive: boolean;
 }
 
+type FoodItemNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'FoodGrid'
+>;
+
 export const FoodItem: React.FC<FoodItemProps> = ({name, image, isActive}) => {
+  const navigation = useNavigation<FoodItemNavigationProp>();
+
+  const handlePress = () => {
+    if (isActive) {
+      navigation.navigate('ChatScreen');
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <TouchableOpacity onPress={handlePress} style={styles.container}>
       <View style={styles.imageContainer}>
         <Image
           source={image}
@@ -18,7 +42,7 @@ export const FoodItem: React.FC<FoodItemProps> = ({name, image, isActive}) => {
         {!isActive && <View style={styles.overlay} />}
       </View>
       <Text style={styles.name}>{name}</Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -58,3 +82,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default FoodItem;
