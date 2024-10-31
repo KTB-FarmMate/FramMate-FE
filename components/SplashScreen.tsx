@@ -2,6 +2,9 @@
 import React, {useEffect, useRef} from 'react';
 import {Text, Image, Animated, StyleSheet} from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import 'react-native-get-random-values';
+import {v4 as uuidv4} from 'uuid';
 import {RootStackParamList} from '../App';
 
 type SplashScreenNavigationProp = StackNavigationProp<
@@ -13,17 +16,36 @@ interface SplashScreenProps {
   navigation: SplashScreenNavigationProp;
 }
 
+const loadMemberId = async () => {
+  try {
+    let memberId = await AsyncStorage.getItem('memberId');
+
+    if (!memberId) {
+      memberId = uuidv4();
+      await AsyncStorage.setItem('memberId', memberId);
+    }
+  } catch (error) {
+    console.error('Error loading memberId:', error);
+  }
+};
+
 export const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 3000,
-      useNativeDriver: true,
-    }).start(() => {
-      navigation.replace('FoodGrid'); // 3초 후 FoodGrid로 이동
-    });
+    const initialize = async () => {
+      await loadMemberId(); // loadMemberId가 완료될 때까지 대기
+
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: true,
+      }).start(() => {
+        navigation.replace('FoodGrid');
+      });
+    };
+
+    initialize();
   }, [navigation, opacity]);
 
   return (
