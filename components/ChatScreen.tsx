@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootStackParamList} from '../App';
+import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 type ChatScreenNavigationProp = StackNavigationProp<
@@ -31,25 +33,61 @@ interface Message {
   isUser: boolean;
 }
 
+const AI_SERVER_URL = '43.203.144.27:8000';
+
+const aiApiClient = axios.create({
+  baseURL: AI_SERVER_URL, // 기본 URL
+});
+
 export const ChatScreen: React.FC<ChatScreenProps> = ({navigation}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSend = () => {
     if (inputText.trim()) {
+      // 사용자의 메시지를 즉시 추가
       const userMessage: Message = {
         id: Date.now().toString(),
         text: inputText,
         isUser: true,
       };
+
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+      setInputText(''); // 입력 필드 초기화
+
+      // AI 응답 요청 보내기
+      fetchAIResponse(userMessage.text);
+    }
+  };
+
+  const fetchAIResponse = async (userMessageText: string) => {
+    setLoading(true);
+    const memberId = await AsyncStorage.getItem('memberId');
+
+    try {
+      const response = await aiApiClient.post('/', {
+        memberId: memberId,
+        message: userMessageText,
+      });
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'AI 답변입니다.',
+        text: response.data.reply, // 서버에서 응답으로 받은 텍스트
         isUser: false,
       };
 
-      setMessages(prevMessages => [...prevMessages, userMessage, aiMessage]);
-      setInputText('');
+      setMessages(prevMessages => [...prevMessages, aiMessage]);
+    } catch (error) {
+      console.error('Failed to fetch AI response:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        text: 'AI 응답을 받을 수 없습니다. 다시 시도해 주세요.',
+        isUser: false,
+      };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,8 +129,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({navigation}) => {
           value={inputText}
           onChangeText={text => setInputText(text)}
         />
-        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <TouchableOpacity
+          onPress={handleSend}
+          style={styles.sendButton}
+          disabled={loading}>
+          <Text style={styles.sendButtonText}>{loading ? '...' : 'Send'}</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>

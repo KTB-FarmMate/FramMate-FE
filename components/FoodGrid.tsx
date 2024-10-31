@@ -2,38 +2,14 @@ import React, {useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {FoodItem} from './FoodItem';
 import {SearchBar} from './SearchBar';
-
-const foodData = [
-  {
-    id: 1,
-    name: '감자',
-    image: require('../assets/potato.png'),
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: '토마토',
-    image: require('../assets/tomato.png'),
-    isActive: true,
-  },
-  {
-    id: 3,
-    name: '양파',
-    image: require('../assets/onion.png'),
-    isActive: false,
-  },
-  {
-    id: 4,
-    name: '고구마',
-    image: require('../assets/sweet-potato.png'),
-    isActive: false,
-  },
-];
+import {useFoodContext} from '../context/FoodContext'; // Adjust the path as necessary
 
 export const FoodGrid = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredFoodData = foodData.filter(food =>
+  const {foods} = useFoodContext();
+
+  const filteredFoodData = foods.filter(food =>
     food.name.includes(searchQuery),
   );
 

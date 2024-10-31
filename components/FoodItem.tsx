@@ -8,8 +8,9 @@ import {
   ImageSourcePropType,
   TouchableOpacity,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+
 import {StackNavigationProp} from '@react-navigation/stack';
+import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../App';
 
 interface FoodItemProps {
@@ -29,6 +30,8 @@ export const FoodItem: React.FC<FoodItemProps> = ({name, image, isActive}) => {
   const handlePress = () => {
     if (isActive) {
       navigation.navigate('ChatScreen');
+    } else {
+      navigation.navigate('FoodRegister', {name: name});
     }
   };
 
