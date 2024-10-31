@@ -1,44 +1,109 @@
 import React, {createContext, useContext, useState} from 'react';
 import {FoodDataItem} from '../types/food';
+import {BACKEND_SERVER_URL} from 'react-native-dotenv';
+import {ImageSourcePropType} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FoodContextType {
   foods: FoodDataItem[];
-  activateFood: (name: string, address: string, plantingDate: string) => void;
+  activateFood: (
+    address: string,
+    plantingDate: string,
+    threadId: string,
+  ) => void;
 }
+
+const cropImages: {[key: string]: any} = {
+  감자: require('../assets/감자.png'),
+  당근: require('../assets/당근.png'),
+  고구마: require('../assets/고구마.png'),
+  양파: require('../assets/양파.png'),
+};
 
 const FoodContext = createContext<FoodContextType | undefined>(undefined);
 
-export const initialFoods: FoodDataItem[] = [
-  {
-    id: 1,
-    name: '감자',
-    image: require('../assets/potato.png'),
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: '토마토',
-    image: require('../assets/tomato.png'),
-    isActive: true,
-  },
-  {
-    id: 3,
-    name: '양파',
-    image: require('../assets/onion.png'),
+const fetchInitialFoods = async () => {
+  interface Crop {
+    id: number;
+    name: string;
+    image: ImageSourcePropType;
+    isActive: boolean;
+  }
+
+  const crops: Crop[] = await fetch(`${BACKEND_SERVER_URL}/crops`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('서버 응답이 좋지 않습니다.');
+      }
+      return response.json();
+    })
+    .then(data =>
+      data.map((item: any) => ({
+        id: item.cropId,
+        name: item.cropName,
+        image: cropImages[item.cropName],
+      })),
+    )
+    .catch(error => {
+      console.error('Error fetching crops:', error);
+      return [];
+    });
+
+  const initialFoods = crops.map((crop: Crop) => ({
+    id: crop.id,
+    name: crop.name,
+    image: crop.image,
     isActive: false,
-  },
-  {
-    id: 4,
-    name: '고구마',
-    image: require('../assets/sweet-potato.png'),
-    isActive: false,
-  },
-];
+  }));
+
+  const memberId = await AsyncStorage.getItem('memberId');
+
+  if (!memberId) {
+    console.error('memberId not found');
+    throw new Error('memberId not found');
+  }
+
+  const threads = await fetch(
+    `${BACKEND_SERVER_URL}/members/${memberId}/threads`,
+  )
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('서버 응답이 좋지 않습니다.');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error fetching threads:', error);
+      throw new Error('Error fetching threads');
+    });
+
+  console.log(threads);
+  initialFoods.forEach((food: any) => {
+    const thread = threads.find((thread: any) => thread.cropName === food.name);
+    if (thread) {
+      food.isActive = true;
+      food.address = thread.address;
+      food.plantingDate = thread.plantingDate;
+      food.threadId = thread.id;
+    }
+  });
+
+  return initialFoods;
+};
 
 export const FoodProvider: React.FC<{children: React.ReactNode}> = ({
   children,
 }) => {
-  const [foods, setFoods] = useState<FoodDataItem[]>(initialFoods);
+  const [foods, setFoods] = useState<FoodDataItem[]>([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const initialFoods = await fetchInitialFoods();
+      setFoods(initialFoods);
+    };
+
+    fetchData();
+  }, []);
 
   const activateFood = (
     name: string,

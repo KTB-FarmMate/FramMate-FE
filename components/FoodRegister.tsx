@@ -13,6 +13,8 @@ import {useNavigation, RouteProp, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 import {useFoodContext} from '../context/FoodContext';
+import {AI_SERVER_URL} from 'react-native-dotenv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type FoodRegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -56,11 +58,36 @@ export const FoodRegister: React.FC = () => {
     return `${year}/${month}/${day}`;
   };
 
-  const handleRegister = () => {
+  const handleRegister = (memberId: string) => {
     if (!address) {
       return;
     }
-    // 서버에 주소와 심은 날짜를 전송하는 로직
+
+    const requestUrl = `${AI_SERVER_URL}/members/${memberId}/threads`;
+
+    fetch(requestUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        crop: name,
+        address, // FIXME: 심은 날짜도 필요함
+      }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('네트워크 응답이 좋지 않습니다.');
+        }
+        return response.json(); // JSON 형식으로 응답 본문을 변환
+      })
+      .then(data => {
+        console.log('등록 결과:', data);
+      })
+      .catch(error => {
+        console.error('오류 발생:', error); // 오류 처리
+      });
+
     activateFood(name, address, formatDate(plantingDate));
 
     navigation.replace('ChatScreen');
@@ -90,7 +117,12 @@ export const FoodRegister: React.FC = () => {
             styles.registerButton,
             !address && styles.registerButtonDisabled,
           ]}
-          onPress={handleRegister}
+          onPress={async () => {
+            const memberId = await AsyncStorage.getItem('memberId');
+            if (memberId) {
+              handleRegister(memberId);
+            }
+          }}
           disabled={!address}>
           <Text style={styles.registerButtonText}>등록하기</Text>
         </TouchableOpacity>
