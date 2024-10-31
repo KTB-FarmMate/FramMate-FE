@@ -5,6 +5,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
+import {BACKEND_SERVER_URL} from 'react-native-dotenv';
 import {RootStackParamList} from '../App';
 
 type SplashScreenNavigationProp = StackNavigationProp<
@@ -21,11 +22,31 @@ const loadMemberId = async () => {
     let memberId = await AsyncStorage.getItem('memberId');
 
     if (!memberId) {
-      memberId = uuidv4();
-      await AsyncStorage.setItem('memberId', memberId);
+      createMemberId();
     }
   } catch (error) {
     console.error('Error loading memberId:', error);
+  }
+};
+const createMemberId = async () => {
+  const memberId = uuidv4();
+  const requestUrl = `${BACKEND_SERVER_URL}/members`;
+
+  console.log(requestUrl);
+  try {
+    const response = await fetch(requestUrl, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new Error('서버 응답이 좋지 않습니다.');
+    }
+
+    // AsyncStorage에 memberId 저장
+    await AsyncStorage.setItem('memberId', memberId);
+  } catch (error) {
+    console.error('Error creating new memberId:', error);
+    return; // 오류 발생 시 함수 종료
   }
 };
 
@@ -34,15 +55,22 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
 
   useEffect(() => {
     const initialize = async () => {
-      await loadMemberId(); // loadMemberId가 완료될 때까지 대기
+      // memberId 로드 비동기 호출
+      await loadMemberId();
 
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: true,
-      }).start(() => {
-        navigation.replace('FoodGrid');
+      // 애니메이션 실행
+      await new Promise<void>(resolve => {
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }).start(() => {
+          resolve(); // 애니메이션이 완료되면 resolve 호출
+        });
       });
+
+      // 애니메이션이 완료된 후 화면 전환
+      navigation.replace('FoodGrid');
     };
 
     initialize();
