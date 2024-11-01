@@ -23,6 +23,7 @@ export const FoodGrid = () => {
         {filteredFoodData.map(food => (
           <FoodItem
             key={food.id}
+            id={food.id}
             name={food.name}
             image={food.image}
             isActive={food.isActive}

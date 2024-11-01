@@ -14,6 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../App';
 
 interface FoodItemProps {
+  id: number;
   name: string;
   image: ImageSourcePropType;
   isActive: boolean;
@@ -24,14 +25,19 @@ type FoodItemNavigationProp = StackNavigationProp<
   'FoodGrid'
 >;
 
-export const FoodItem: React.FC<FoodItemProps> = ({name, image, isActive}) => {
+export const FoodItem: React.FC<FoodItemProps> = ({
+  id,
+  name,
+  image,
+  isActive,
+}) => {
   const navigation = useNavigation<FoodItemNavigationProp>();
 
   const handlePress = () => {
     if (isActive) {
       navigation.navigate('ChatScreen');
     } else {
-      navigation.navigate('FoodRegister', {name: name});
+      navigation.navigate('FoodRegister', {id: id, name: name});
     }
   };
 

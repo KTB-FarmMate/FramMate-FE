@@ -7,8 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface FoodContextType {
   foods: FoodDataItem[];
   activateFood: (
+    name: string,
     address: string,
-    plantingDate: string,
+    plantedDate: string,
     threadId: string,
   ) => void;
 }
@@ -108,12 +109,20 @@ export const FoodProvider: React.FC<{children: React.ReactNode}> = ({
   const activateFood = (
     name: string,
     address: string,
-    plantingDate: string,
+    plantedDate: string,
+    threadId: string,
   ) => {
     setFoods(prevFoods =>
       prevFoods.map(food =>
         food.name === name
-          ? {...food, isActive: true, address, plantingDate}
+          ? {
+              ...food,
+              isActive: true,
+              name: name,
+              address,
+              threadId: threadId,
+              plantedDate: plantedDate,
+            }
           : food,
       ),
     );

@@ -15,6 +15,8 @@ import {RootStackParamList} from '../App';
 import {useFoodContext} from '../context/FoodContext';
 import {AI_SERVER_URL} from 'react-native-dotenv';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ThreadCreateRequestDto from '../dto/thread/request/ThreadCreateRequestDto';
+import ThreadCreateResponseDto from '../dto/thread/response/ThreadCreateResponseDto';
 
 type FoodRegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -35,11 +37,11 @@ interface AddressData {
 export const FoodRegister: React.FC = () => {
   const navigation = useNavigation<FoodRegisterScreenNavigationProp>();
   const route = useRoute<FoodRegisterScreenRouteProp>();
-  const {name} = route.params;
+  const {id, name} = route.params;
 
   const [address, setAddress] = useState<string>('');
   const [showPostcode, setShowPostcode] = useState<boolean>(false);
-  const [plantingDate, setPlantingDate] = useState<Date>(new Date());
+  const [plantedDate, setPlantingDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const {activateFood} = useFoodContext();
 
@@ -71,26 +73,29 @@ export const FoodRegister: React.FC = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        crop: name,
-        address, // FIXME: 심은 날짜도 필요함
-      }),
+        cropId: id,
+        cropName: name,
+        address,
+        plantedDate: formatDate(plantedDate),
+      } as ThreadCreateRequestDto),
     })
       .then(response => {
         if (!response.ok) {
           throw new Error('네트워크 응답이 좋지 않습니다.');
         }
-        return response.json(); // JSON 형식으로 응답 본문을 변환
+        return response.json();
       })
-      .then(data => {
-        console.log('등록 결과:', data);
-      })
-      .catch(error => {
-        console.error('오류 발생:', error); // 오류 처리
-      });
+      .then((data: ThreadCreateResponseDto) => handleSuccess(data))
+      .catch((error: Error) => handleError(error));
 
-    activateFood(name, address, formatDate(plantingDate));
+    const handleSuccess = (data: ThreadCreateResponseDto) => {
+      activateFood(name, address, formatDate(plantedDate), data.data.threadId);
+      navigation.replace('ChatScreen');
+    };
 
-    navigation.replace('ChatScreen');
+    const handleError = (error: any) => {
+      console.error('오류 발생:', error);
+    };
   };
 
   return (
@@ -109,7 +114,7 @@ export const FoodRegister: React.FC = () => {
         <TouchableOpacity
           style={styles.dateButton}
           onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateButtonText}>{formatDate(plantingDate)}</Text>
+          <Text style={styles.dateButtonText}>{formatDate(plantedDate)}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -161,7 +166,7 @@ export const FoodRegister: React.FC = () => {
         <DatePicker
           modal
           open={showDatePicker}
-          date={plantingDate}
+          date={plantedDate}
           mode="date"
           locale="ko"
           onConfirm={(date: Date) => {

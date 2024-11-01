@@ -12,7 +12,7 @@ import {FoodProvider} from './context/FoodContext';
 export type RootStackParamList = {
   Splash: undefined;
   FoodGrid: undefined;
-  FoodRegister: {name: string};
+  FoodRegister: {id: number; name: string};
   ChatScreen: undefined;
 };
 

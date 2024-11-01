@@ -4,5 +4,5 @@ export interface FoodDataItem {
   image: any;
   isActive: boolean;
   address?: string;
-  plantingDate?: string;
+  plantedDate?: string;
 }
